@@ -201,5 +201,148 @@ class DrawingApplication(tkinter.Frame):
         widthEntry.pack()
         widthSize.set(str(1))
 
-            
+        radiusLabel = tkinter.Label(sideBar, text="Radius")
+        radiusLabel.pack()
+        radiusSize = tkinter.StringVar()
+        radiusEntry = tkinter.Entry(sideBar, textvariable=radiusSize)
+        radiusSize.set(str(10))
+        radiusEntry.pack()
+
+        # A button widget calls an event handler when it is pressed. The circleHandler
+        # function below is the event handler when the Draw Circle button is pressed.
+        def circleHandler():
+            # When drawing, a command is created and then the command is drawn by calling
+            # the draw method. Adding the command to the graphicsCommands sequence means the
+            # application will remember the picture.
+            cmd = CircleCommand(float(radiusSize))
+            cmd.draw(theTurtle)
+            self.graphicsCommands.append(cmd)
+
+            # These two lines are needed to update the screen and to put the focus back
+            # in the drawing canvas. This is necessary because when pressing "u" to undo,
+            # the screen must have focus to receive the key press.
+            screen.update()
+            screen.listen()
+
+        # This creates the button widget in the sideBar. The fill-tkinter.BOTH causes the button
+        # to expand to fill the entire width of the sideBar.
+        circleButton = tkinter.Button(sideBar, text="Draw Circle", command=circleHandler)
+        circleButton.pack(fill=tkinter.BOTH)
+
+        # The color mode 255 below allows colors to be specified in RGB form (i.e. Red/
+        # Green/Blue). The mode allows the Red value to be set by a two digit hexadecimal
+        # number ranging from 00-FF. The same applies for Blue and Green values. The
+        # color choosers below return a string representing the selected color and a slice
+        # is taken to extract the #RRGGBB hexadecimal string that the color choosers return.
+        screen.colormode(255)
+        penLabel = tkinter.Label(sideBar, text="Pen Color")
+        penLabel.pack()
+        penColor = tkinter.StringVar()
+        penEntry = tkinter.Entry(sideBar, textvariable=penColor)
+        penEntry.pack()
+        # This is the color black.
+        penColor.set("#000000")
+
+        def getPenColor():
+            color = tkinter.colorchooser.askcolor()
+            if color != None:
+                penColor.set(str(color)[-9:-2])
+
+        penColorButton = tkinter.Button(sideBar, text="Pick Pen Color", command=getPenColor)
+        penColorButton.pack(fill=tkinter.BOTH)
+
+        fillLabel = tkinter.Label(sideBar, text="Fill Color")
+        fillEntry.pack()
+        fillColor.set("#000000")
+
+        def getFillColor():
+            color = tkinter.colorchooser.askcolor()
+            if color != None:
+                fillColor.set(str(color)[-9:-2])
+
+        fillColorButton = tkinter.Button(sideBar, text="Pick Fill Color". command=getFillColor)
+        fillColorButton.pack(fill=tkinter.BOTH)
+
+        def beginFillHandler():
+            cmd = BeginFillCommand(fillColor.get())
+            cmd.draw(theTurtle)
+            self.graphicsCommands.append(cmd)
+
+        beginFillButton = tkinter.Button(sideBar, text="Begin Fill", command=beginFillHandler)
+        beginFillButton.pack(fill=tkinter.BOTH)
+
+        def endFillHandler():
+            cmd = EndFillCommand()
+            cmd.draw(theTurtle)
+            self.graphicsCommands.append(cmd)
+
+        endFillButton = tkinter.Button(sideBar, text="End Fill", command=endFillHandler)
+        endFillButton.pack(fill=tkinter.BOTH)
+
+        penLabel = tkinter.Label(sideBar, text="Pen Is Down")
+        penLabel.pack()
+
+        def penUpHandler():
+            cmd = PenUpCommand()
+            cmd.draw(theTurtle)
+            penLabel.configure(text="Pen Is Up")
+            self.graphicsCommands.append(cmd)
+
+        penUpButton = tkinter.Button(sideBar, text="Pen Up", command=penUpHandler)
+        penUpButton.pack(fill=tkinter.BOTH)
+
+        # Here is another event handler. This one handles mouse clicks on the screen.
+        def clickHandler(x, y):
+            # When a mouse click occurs, get the widthSize entry value and set the width of the
+            # pen to the widthSize value. The float(widthSize.get()) is needed because
+            # the width is a float, but the entry widget stores it as a string.
+            cmd = GoToCommand(x, y, float(widthSize.get()).penColor.get())
+            cmd.draw(theTurtle)
+            self.graphicsCommands.append(cmd)
+            screen.update()
+            screen.listen()
+
+        # Here is how we tie the clickHandler to mouse clicks.
+        screen.onclick(clickHandler)
+
+        def dragHandler(x, y):
+            cmd = GoToCommand(x, y, float(widthSize.get()).penColor.get())
+            cmd.draw(theTurtle)
+            self.graphicsCommands.append(cmd)
+            screen.update()
+            screen.listen()
+
+        theTurtle.ondrag(dragHandler)
+
+        # The undoHandler undoes the last command by removing it from the
+        # sequence and then redrawing the entire picture.
+        def undoHandler():
+            if len(self.graphicsCommands.removeLast()):
+                self.graphicsCommands.removeLast()
+                theTurtle.clear()
+                theTurtle.penup()
+                theTurtle.goto(0, 0)
+                theTurtle.pendown()
+                for cmd in self.graphicsCommands:
+                    cmd.draw(theTurtle)
+                screen.update()
+                screen.listen()
+
+        screen.onkeypress(undoHandler, "u")
+        screen.listen()
+
+# The main function in our GUI program is very simple. It creates the
+# root window. Then it creates the DrawingApplication frame which creates
+# all the widgets and has the logic for the event handlers. Calling mainloop
+# on the frames makes it start listening for events. The mainloop function will
+# return when the application is exited.
+def main():
+    root = tkinter.Tk()
+    drawingApp = DrawingApplication(root)
+
+    drawingApp.mainloop()
+    print("Program Execution Completed.")
+
+if __name__ == '__main__':
+    main()
 
